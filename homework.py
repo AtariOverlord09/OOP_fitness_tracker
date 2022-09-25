@@ -1,4 +1,5 @@
 from dataclasses import dataclass, asdict
+from typing import Type
 
 
 @dataclass
@@ -65,15 +66,15 @@ class Running(Training):
 
     def get_spent_calories(self) -> float:
         mean_speed = self.get_mean_speed()
-        spent_cali = ((self.COEFF_CALORIE_1
-                      * mean_speed
-                      - self.COEFF_CALORIE_2)
-                      * self.weight
-                      / self.M_IN_KM
-                      * (self.duration
-                      * self.MIN_IN_H)
-                      )
-        return spent_cali
+        calorie_count = ((self.COEFF_CALORIE_1
+                         * mean_speed
+                         - self.COEFF_CALORIE_2)
+                         * self.weight
+                         / self.M_IN_KM
+                         * (self.duration
+                         * self.MIN_IN_H)
+                         )
+        return calorie_count
 
 
 class SportsWalking(Training):
@@ -108,7 +109,7 @@ class Swimming(Training):
 
     def __init__(self, action, duration, weight,
                  length_pool: float,
-                 count_pool: int) -> None:
+                 count_pool: float) -> None:
         self.action = action
         self.duration = duration
         self.weight = weight
@@ -118,34 +119,29 @@ class Swimming(Training):
     def get_mean_speed(self) -> float:
         """Получить среднюю скорость движения."""
         """длина_бассейна * count_pool / M_IN_KM / время_тренировки """
-        pool_length = self.length_pool
-        c_pool = self.count_pool
-        durat = self.duration
-        mean_speed_pool = (pool_length * c_pool
-                           / self.M_IN_KM
-                           / durat)
-        return mean_speed_pool
+        return (self.length_pool * self.count_pool
+                / self.M_IN_KM
+                / self.duration)
 
     def get_spent_calories(self) -> float:
         """(средняя_скорость + 1.1) * 2 * вес"""
         mean_speed = self.get_mean_speed()
-        spent_cali = ((mean_speed + self.COEFF_CALORIE_1)
-                      * self.COEFF_CALORIE_2
-                      * self.weight)
-        return spent_cali
+        return ((mean_speed + self.COEFF_CALORIE_1)
+                * self.COEFF_CALORIE_2
+                * self.weight)
 
 
 def read_package(workout_type: str, data: list) -> Training:
     """Прочитать данные полученные от датчиков."""
-    training_pac: dict[str, type] = {'SWM': Swimming,
-                                     'RUN': Running,
-                                     'WLK': SportsWalking
-                                     }
+    training_comparison: dict[str, Type[Training]] = {'SWM': Swimming,
+                                                      'RUN': Running,
+                                                      'WLK': SportsWalking
+                                                      }
 
-    if workout_type not in training_pac:
+    if workout_type not in training_comparison:
         raise ValueError('Тип тренировки не распознан')
 
-    return training_pac[workout_type](*data)
+    return training_comparison[workout_type](*data)
 
 
 def main(training: Training) -> None:
